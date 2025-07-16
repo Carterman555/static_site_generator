@@ -2,7 +2,7 @@ import unittest
 from textnode import TextNode
 from textnode import TextType
 from htmlnode import HTMLNode
-from textnode_to_htmlnode import text_node_to_html_node
+from functions import text_node_to_html_node
 
 class TestConversion(unittest.TestCase):
     def test_text(self):
