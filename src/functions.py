@@ -340,7 +340,7 @@ def extract_title(markdown):
     return markdown[start_index:end_index]
 
 
-def generate_page(from_path, template_path, dest_path):
+def generate_page(from_path, template_path, dest_path, basepath):
     print(f"Generating page from {from_path} to {dest_path}")
 
     with open(from_path) as f:
@@ -353,6 +353,8 @@ def generate_page(from_path, template_path, dest_path):
     title = extract_title(markdown)
 
     full_html = template.replace("{{ Title }}", title).replace("{{ Content }}", md_html)
+    full_html = full_html.replace('href="/', f'href="{basepath}')
+    full_html = full_html.replace('src="/', f'src="{basepath}')
 
     dest_only_path, file = os.path.split(dest_path)
 
@@ -363,16 +365,16 @@ def generate_page(from_path, template_path, dest_path):
         f.write(full_html)
 
 
-def generate_pages_recursive(dir_path_content, template_path, dest_dir_path):
+def generate_pages_recursive(dir_path_content, template_path, dest_dir_path, basepath):
 
     for item in os.listdir(dir_path_content):
         item_path = os.path.join(dir_path_content, item)
         if os.path.isdir(item_path):
             new_dest_dir_path = os.path.join(dest_dir_path, item)
-            generate_pages_recursive(item_path, template_path, new_dest_dir_path)
+            generate_pages_recursive(item_path, template_path, new_dest_dir_path, basepath)
         elif item.endswith(".md"):
-            html_item = f"{item[:3]}.html"
+            html_item = f"{item[:-3]}.html"
             dest_path = os.path.join(dest_dir_path, html_item)
-            generate_page(item_path, template_path, dest_path)
+            generate_page(item_path, template_path, dest_path, basepath)
         else:
             raise Exception(f"Error: item is not dir or markdown file: {item_path}")
