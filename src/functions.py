@@ -5,6 +5,8 @@ from leafnode import LeafNode
 from parentnode import ParentNode
 from blocktype import BlockType
 import re
+import os
+import shutil
 
 def text_node_to_html_node(text_node):
     match text_node.text_type:
@@ -319,4 +321,58 @@ def markdown_to_html_node(markdown, debug=False):
     return div_node
 
 
+def extract_title(markdown):
+    if markdown.startswith("# "):
+        start_index = 2
+    else:
+        start_index = markdown.find("\n# ") + 3
 
+        no_heading = start_index == 2
+        if no_heading:
+            raise Exception(f"Error: Cannot find heading in markdown {markdown}")
+    
+    
+    
+    end_index = start_index
+    while end_index < len(markdown) and markdown[end_index] != "\n":
+        end_index += 1
+
+    return markdown[start_index:end_index]
+
+
+def generate_page(from_path, template_path, dest_path):
+    print(f"Generating page from {from_path} to {dest_path}")
+
+    with open(from_path) as f:
+        markdown = f.read()
+
+    with open(template_path) as f:
+        template = f.read()
+
+    md_html = markdown_to_html_node(markdown).to_html()
+    title = extract_title(markdown)
+
+    full_html = template.replace("{{ Title }}", title).replace("{{ Content }}", md_html)
+
+    dest_only_path, file = os.path.split(dest_path)
+
+    if not os.path.exists(dest_only_path):
+        os.makedirs(dest_only_path)
+
+    with open(dest_path, "w") as f:
+        f.write(full_html)
+
+
+def generate_pages_recursive(dir_path_content, template_path, dest_dir_path):
+
+    for item in os.listdir(dir_path_content):
+        item_path = os.path.join(dir_path_content, item)
+        if os.path.isdir(item_path):
+            new_dest_dir_path = os.path.join(dest_dir_path, item)
+            generate_pages_recursive(item_path, template_path, new_dest_dir_path)
+        elif item.endswith(".md"):
+            html_item = f"{item[:3]}.html"
+            dest_path = os.path.join(dest_dir_path, html_item)
+            generate_page(item_path, template_path, dest_path)
+        else:
+            raise Exception(f"Error: item is not dir or markdown file: {item_path}")
